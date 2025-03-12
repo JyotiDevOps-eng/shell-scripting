@@ -1,0 +1,38 @@
+#!/bin/bash
+set -x
+
+API_URL="https://api.github.com"
+
+#To set username and token
+Username=$username
+Token=$token
+
+#To form repo url
+Repo_owner=$1
+Repo_name=$2
+
+function github_get_api {
+        local endpoint="$1"
+        local url="${API_URL}/${endpoint}"
+
+        #Sending request to Github
+        curl -s -u ${Username}:${Token} "$url"
+
+}
+function list_collaborators {
+        local endpoint="repos/${Repo_owner}/${Repo_name}/collaborators"
+
+        # Fetch the list of collaborators on the repository
+        collaborators="$(github_get_api "$endpoint" | jq -r '.[] | select(.permissions.pull == true) | .login')"
+
+    # Display the list of collaborators with read access
+    if [[ -z "$collaborators" ]]; then
+        echo "No users with read access found for  ${Repo_owner}/${Repo_name}."
+    else
+        echo "Users with read access to  ${Repo_owner}/${Repo_name}:"
+        echo "$collaborators"
+    fi
+}
+
+echo "Listing of collaborators with read access only for ${Repo_owner}/${Repo_name}..."
+list_collaborators
